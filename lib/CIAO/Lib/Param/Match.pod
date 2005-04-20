@@ -1,0 +1,67 @@
+=head1 NAME
+
+CIAO::Lib::Param::Match - handle a list of matched parameters
+
+=head1 SYNOPSIS
+
+  use CIAO::Lib::Param;
+
+  $pf = CIAO::Lib::Param->new( $filename );
+  $pmatch = $pf->match( $template );
+
+  printf "number of matched parameters: %d\n", $pmatch->length;
+  while( my $pname = $pmatch->next ) { print "$pname\n" };
+
+  # do it all over again
+  $pmatch->rewind;
+
+=head1 DESCRIPTION
+
+These routines manipulate the CIAO::Lib::Param::Match object returned
+by the CIAO::Lib::Param B<match()> method.
+
+
+=head2 Methods
+
+=over
+
+=item length
+
+   $len = $pmatch->length;
+
+returns the number of matched parameters.
+
+=item next
+
+   $pname = $pmatch->next;
+
+returns the name of the next parameter in the list.  It returns
+B<undef> if at the end of the list.
+
+
+=item rewind
+
+   $pmatch->rewind;
+
+Reset the list so that the next call to B<next()> will return the
+first element of the list.
+
+
+=back
+
+=head1 SEE ALSO
+
+CIAO::Lib::Param.
+
+=head1 AUTHOR
+
+Diab Jerius, E<lt>djerius@cpanE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005 by the Smithsonian Astrophysical Observatory
+
+This code is released under the GNU General Public License.  You may
+find a copy at <http://www.fsf.org/copyleft/gpl.html>.
+
+=cut

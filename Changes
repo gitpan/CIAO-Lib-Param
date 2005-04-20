@@ -1,0 +1,6 @@
+Revision history for Perl extension CIAO::Lib::Param.
+
+0.01  Fri Apr  8 11:00:15 2005
+	- original version; created by h2xs 1.23 with options
+		-O -n CIAO::Lib::Param -x --omit-constant -A parameter_perl.h
+
