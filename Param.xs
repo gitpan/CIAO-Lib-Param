@@ -116,7 +116,9 @@ open(filename, mode, ...)
 	  int i;
 	  argv = get_mortalspace( argc * sizeof(*argv) );
 	  for ( i = 2 ; i < items ; i++ )
-	    argv[i] = SvPVX(ST(i));
+	  {
+	    argv[i-2] = SvOK(ST(i)) ? (char*)SvPV_nolen(ST(i)) : (char*)NULL;
+	  }
 	}
 	RETVAL = paramopen(filename, argv, argc, mode);
 	if ( NULL == RETVAL )

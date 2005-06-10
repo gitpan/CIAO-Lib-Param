@@ -1,5 +1,15 @@
 Revision history for Perl extension CIAO::Lib::Param.
 
+0.02  Fri Jun 10 09:02:17 EDT 2005
+
+        - can now pass extra arguments to pget, as in new.
+
+	- passing of extra arguments to paramopen was done incorrectly,
+	  leading to segv's
+
+	- now supports paramopen's two methods of supplying a
+          parameter file name.
+
 0.01  Fri Apr  8 11:00:15 2005
 	- original version; created by h2xs 1.23 with options
 		-O -n CIAO::Lib::Param -x --omit-constant -A parameter_perl.h

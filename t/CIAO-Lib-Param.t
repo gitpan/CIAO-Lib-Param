@@ -1,4 +1,4 @@
-use Test::More tests => 47;
+use Test::More tests => 55;
 
 use File::Path;
 BEGIN { use_ok('CIAO::Lib::Param') };
@@ -17,6 +17,7 @@ mkdir( 'tmp', 0755 );
 my @pnames = pnames( "param/surface_intercept.par" );
 
 our $pf;
+our $value;
 
 # check for non-existent parameter file
 eval { 
@@ -33,15 +34,17 @@ ok( !$@, "new" )
 is( $pf->get( 'dfm2_filename'), 'perfect.DFR', 'get' );
 
 # make sure boolean transformations in get() work like in getb()
-ok( 1 == $pf->getb( 'onlygoodrays' ), "getb" );
-ok( 1 == $pf->get( 'onlygoodrays' ),  "get boolean" );
+ok( 1 == $pf->getb( 'onlygoodrays' ), "getb: true" );
+ok( 1 == $pf->get( 'onlygoodrays' ),  "get boolean: true" );
+ok( 0 == $pf->getb( 'help' ), "getb: false" );
+ok( 0 == $pf->get( 'help' ),  "get boolean: false" );
 
 
 # check out pmatch
 {
   my @lnames = @pnames;
   my $pm = $pf->match( '*' );
-  
+
   while( my $pname = $pm->next )
   {
     my $lname = (shift @lnames)->{name};
@@ -52,6 +55,36 @@ ok( 1 == $pf->get( 'onlygoodrays' ),  "get boolean" );
 # close the parameter file.
 undef $pf;
 
+#--------------------------------------------------------
+# check if two filename new works
+eval {
+  $pf = CIAO::Lib::Param->new([ "surface_intercept", undef ], "rH");
+};
+ok ( !$@ && 1 == $pf->get('onlygoodrays'), "[filename,undef] open" )
+  or diag($@);
+
+eval {
+  $pf = CIAO::Lib::Param->new([ undef, "surface_intercept" ], "rH");
+};
+ok ( !$@ && 1 == $pf->get('onlygoodrays'), "[undef,filename] open" )
+  or diag($@);
+
+undef $pf;
+
+
+#--------------------------------------------------------
+# check if command line arguments work
+eval {
+  $pf = CIAO::Lib::Param->new( "surface_intercept", "rH", "help+" );
+};
+ok ( !$@, "new with arguments" )
+  or diag($@);
+
+ok ( 1 == $pf->get( 'help' ), "command line set" );
+
+undef $pf;
+
+#--------------------------------------------------------
 # check out reading everything with pget
 {
   my %list = pget( 'surface_intercept' );
@@ -72,29 +105,43 @@ undef $pf;
 
 }
 
+#--------------------------------------------------------
 # test pset of a single value
 eval {
   pset( 'surface_intercept', input => 'SnackFud' );
 };
 ok( !$@, "pset: single" ) or diag($@);
 
+#--------------------------------------------------------
 # test pget of a single value
 is( pget( 'surface_intercept', 'input' ), 'SnackFud', "pget: single" );
 
+#--------------------------------------------------------
 # test pset of multiple values
 eval {
   pset( 'surface_intercept', input => 'YoMama', output => 'YoDaddy' );
 };
 ok( !$@, "pset: multiple" ) or diag($@);
 
+#--------------------------------------------------------
 # test pget of multiple values
 eval {
   my ( $input, $output ) = pget( 'surface_intercept', qw/ input output / );
   ok ( $input eq 'YoMama' && $output eq 'YoDaddy', "pget: multiple" );
 };
-ok( !$@, "pset/pget: multiple" ) or diag $@;
+ok( !$@, "pget: multiple" ) or diag $@;
 
 
+#--------------------------------------------------------
+# check if command line arguments work with pget
+eval {
+  is ( pget( 'surface_intercept', [ 'help+'], 'help' ), 1, "pget: argv" );
+};
+ok ( !$@, "pget: argv" )
+  or diag($@);
+undef $pf;
+
+#--------------------------------------------------------
 sub pnames
 {
   my ( $filename ) = @_;

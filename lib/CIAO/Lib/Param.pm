@@ -21,7 +21,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 require XSLoader;
 XSLoader::load('CIAO::Lib::Param', $VERSION);
@@ -95,9 +95,26 @@ sub new
   my $class = shift;
 
   my $self;
-  my $filename = shift;
+  my $file = shift;
   my $mode  = shift || "r";
-  $self = CIAO::Lib::Param::open( $filename, $mode, @_ );
+
+  my @arglist = @_;
+
+  my $filename;
+
+  if ( 'ARRAY' eq ref $file )
+  {
+    $filename = $file->[0];
+    unshift @arglist, $file->[1];
+  }
+
+  else
+  {
+    unshift @arglist, $file;
+    $filename = undef;
+  }
+
+  $self = CIAO::Lib::Param::open( $filename, $mode, @arglist );
 
 
   $self;
@@ -106,32 +123,33 @@ sub new
 # class get method to perform a one shot read of parameters
 sub pget
 {
-  my ( $pfile, @params ) = @_;
+  my $pfile = shift;
+
+  my $argv = 'ARRAY' eq ref $_[0] ? shift : undef;
 
   my $wantarray = wantarray();
 
-  my $pf = CIAO::Lib::Param->new( $pfile, "rH" );
+  my $pf = CIAO::Lib::Param->new( $pfile, "rH", defined $argv ? @$argv : () );
 
-  if ( @params )
+  if ( @_ )
   {
-    my @bogus = grep { ! $pf->access( $_ ) } @params;
+    my @bogus = grep { ! $pf->access( $_ ) } @_;
     croak( "unknown parameters: ", join( ', ', @bogus ), "\n") 
       if @bogus;
-    return $wantarray ? map { $pf->get( $_ ) } @params : $pf->get($params[0]);
+    return $wantarray ? map { $pf->get( $_ ) } @_ : $pf->get($_[0]);
   }
 
   else
   {
     my $pm = $pf->match( '*' );
-    while ( $_ = $pm->next ) {
-      push @params, $_;
-    }
+
+    my @params;
+    push @params, $_ while $_ = $pm->next;
 
     return map { ( $_ => $pf->get( $_ ) ) } @params;
   }
 
   die( "impossible!\n" );
-
 }
 
 sub pset
@@ -211,8 +229,11 @@ for repeated access to parameters.
 
   $pvalue  = pget( $filename, $pname );
   @pvalues = pget( $filename, @pnames );
+  %params  = pget( $filename );
 
-  %params = pget( $filename );
+  $pvalue  = pget( $filename, $argv, $pname );
+  @pvalues = pget( $filename, $argv, @pnames );
+  %params  = pget( $filename, $argv );
 
 In the first form (called in scalar context), retrieve the value of a
 single parameter.
@@ -222,6 +243,12 @@ specified parameters are returned as a list.
 
 In the third form, retrieve all of the parameters from the file as a
 hash, keyed off of the parameter name.
+
+The C<$filename> argument may optionally be followed by an arrayref, which
+should contain elements of the form C<param=value>.  Typically this is
+used to allow command line argument assignment:
+
+  %params = pget( $0, \@ARGV );
 
 =item pset
 
@@ -264,10 +291,11 @@ a space or C<,> separated list of directories.
    $pf = CIAO::Lib::Param->new( $filename );
    $pf = CIAO::Lib::Param->new( $filename, $mode );
    $pf = CIAO::Lib::Param->new( $filename, $mode, @arglist );
+   $pf = CIAO::Lib::Param->new( [ $filename, $argv0], $mode, @arglist );
 
 Create a new object and associate it with the specified parameter
 file.  See L<Finding Parameter Files> for more information on how the
-path to the file is determined.  
+path to the file is determined.
 
 B<$mode> indicates the IRAF mode with which the file should be opened
 (it defaults to C<rw> if not specified).  It should be one of the
@@ -275,6 +303,18 @@ B<$mode> indicates the IRAF mode with which the file should be opened
 C<rH>, etc).  C<@arglist> is a list of parameter settings that will
 override those given in the parameter file.  They are strings of the
 form of C<par=value>.
+
+C<$filename> is typically C<$0>.  However, the underlying library uses
+I<two> arguments to determine the name of the parameter file.  In the
+(extremely) rare situation where you wish to use that functionality,
+pass the two names as elements of an anonymous array.  The underlying
+call has the following definition:
+
+  paramopen( filename, argv, argc, filemode )
+
+The C<$filename> parameter will be passed as C<filename>.  The
+C<$argv0> parameter, which is typically just C<$0>, will be inserted
+into the C<argv> array as the first element.
 
 B<new> throws an exception via B<croak> if there is an error.
 
