@@ -21,7 +21,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 require XSLoader;
 XSLoader::load('CIAO::Lib::Param', $VERSION);
@@ -38,53 +38,9 @@ XSLoader::load('CIAO::Lib::Param', $VERSION);
   sub error   { $_[0]->{error} }
   sub errno   { $_[0]->{errno} }
   sub errstr  { $_[0]->{errstr} }
-  sub errmsg  { $_[0]->{errmmsg} }
+  sub errmsg  { $_[0]->{errmsg} }
 }
 
-
-{
-  package CIAO::Lib::Param::Croak;
-  use Carp;
-
-  sub TIESCALAR
-  {
-    my $class = shift;
-    my $self;
-    bless \$self, $class;
-  }
-
-  sub FETCH { ${$_[0]} }
-
-  sub STORE
-  {
-    # set to non-zero value
-    if ( ${$_[0]} = $_[1] )
-    {
-      my $error = $CIAO::Lib::Param::_errmsg || $CIAO::Lib::Param::_errstr;
-      my $e = CIAO::Lib::Param::Error->new(
-					   error  => Carp::shortmess($error),
-					   errno  => $_[1],
-					   errstr => $CIAO::Lib::Param::_errstr,
-					   errmsg => $CIAO::Lib::Param::_errmsg,
-					  );
-
-      # the Perl interface code will reset all of the error variables the
-      # next time one of the cxcparam routines is called.
-      die( $e );
-    }
-  }
-
-}
-
-our $_errno;
-our $_errmsg;
-our $_errstr;
-
-# arrange for croaking when a non-zero error is set by the library
-# must do the assign here, as it seems that if it is first done
-# within the XS code it doesn't take the first time.
-tie $CIAO::Lib::Param::_errno, 'CIAO::Lib::Param::Croak';
-$CIAO::Lib::Param::_errno = 0;
 
 
 # simple wrapper around open to get croakability. note
@@ -436,7 +392,9 @@ esoteric cases this should suffice.
 
   $pf->set( $pname, $value );
 
-Set the named parameter to the given value.
+Set the named parameter to the given value.  In the case that the
+parameter is boolean, and the value is not a string, it will
+automatically convert Perl booleans to those required by B<cxcparam>.
 
 =item setb [putb]
 
@@ -471,7 +429,7 @@ Convert the value to a short.
   $pf->setd( $pname, $value );
 
 Set the named parameter to the given value.  Convert the value to a
-string.  This is redundant with B<set>.
+string.
 
 =back
 

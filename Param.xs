@@ -2,6 +2,19 @@
 #include "perl.h"
 #include "XSUB.h"
 
+/* Global Data */
+
+#define MY_CXT_KEY "CIAO::Lib::Param::_guts" XS_VERSION
+
+typedef struct {
+  int parerr;
+  char* errmsg;
+} my_cxt_t;
+
+START_MY_CXT
+
+
+
 #include "ppport.h"
 
 #ifdef FLAT_INCLUDES
@@ -30,45 +43,116 @@ get_mortalspace( int nbytes )
   return SvPVX(mortal);
 }
 
+
+static SV*
+carp_shortmess( char* message )
+{
+  SV* sv_message = newSVpv( message, 0 );
+  SV* short_message;
+  int count;
+
+  dSP;
+  ENTER ;
+  SAVETMPS ;
+    
+  PUSHMARK(SP);
+  XPUSHs( sv_message );
+  PUTBACK;
+
+  /* make sure there's something to work with */
+  count = call_pv( "Carp::shortmess", G_SCALAR );
+    
+  SPAGAIN ;
+
+  if ( 1 != count )
+    croak( "internal error passing message to Carp::shortmess" );
+
+  short_message = newSVsv( POPs );
+
+  PUTBACK ;
+  FREETMPS ;
+  LEAVE ;
+
+  return short_message;
+}
+
+
 /* propagate the cxcparam error value up to Perl.
    this is used to cause a croak at the Perl level (see Param.pm for
-   more info */
+*/
 static void
 set_parerr( void )
 {
-  /* save, as paramerrstr resets parerr */
-  int s_parerr = parerr;
+  dMY_CXT;
+
   SV *sv;
 
-  /* push error string up to Perl*/
-  sv = get_sv( "CIAO::Lib::Param::_errstr", 1 );
-  if ( parerr )
-    sv_setpv( sv, paramerrstr() );
-  else
-    sv_setsv( sv, &PL_sv_undef );
+  /* use parerr if specified; else use MY_CXT.parerr.  The latter is
+     available if c_paramerr was called. some cxcparam routines
+     don't call c_paramerr
+  */
 
-  /* push error code up to Perl.  do this last
-     as a non-zero value will cause a croak,
-     and errstr should be set before that */
-  sv = get_sv( "CIAO::Lib::Param::_errno", 1 );
-  sv_setiv( sv, s_parerr );
-  SvSETMAGIC(sv);
+  if ( parerr )
+    MY_CXT.parerr = parerr;
+
+  if ( MY_CXT.parerr )
+  {
+    SV* sv_error;
+    HV* hash = newHV();
+    char *errstr = paramerrstr();
+    char *error = MY_CXT.errmsg ? MY_CXT.errmsg : errstr;
+
+
+    /* construct exception object prior to throwing exception */
+
+    hv_store( hash, "errno" , 5, newSViv(MY_CXT.parerr), 0 );
+    hv_store( hash, "error" , 5, carp_shortmess(error), 0 );
+    hv_store( hash, "errstr", 6, newSVpv(errstr, 0), 0 );
+    hv_store( hash, "errmsg", 6, MY_CXT.errmsg ? newSVpv(MY_CXT.errmsg, 0) : &PL_sv_undef, 0 );
+
+    /* reset internal parameter error */
+    parerr = MY_CXT.parerr = 0;
+    Safefree( MY_CXT.errmsg );
+    MY_CXT.errmsg = NULL;
+    
+    /* setup exception object and throw it*/
+    {
+      SV* errsv = get_sv("@", TRUE);
+      sv_setsv( errsv, sv_bless( newRV_noinc((SV*) hash),
+				 gv_stashpv("CIAO::Lib::Param::Error", 1 ) ) );
+    }
+    croak( Nullch );
+
+  }
+  
+
 }
 
 /* The replacement error message handling routine for cxcparam.
-   This is put in place in the BOOT: section */
+   This is put in place in the BOOT: section
+   Note that both paramerrstr() and c_paramerr reset parerr,
+   so we need to keep a local copy.  ugh.
+*/
 static void
 perl_paramerr( int level, char *message, char *name )
 {
+  dMY_CXT;
   SV* sv;
+  char *errstr;
 
-  /* paramerrstr resets parerr */
-  int s_parerr = parerr;
+  /* save parerr before call to paramerrstr(), as that will
+     reset it */
+  MY_CXT.parerr = parerr;
+  errstr = paramerrstr();
 
-  sv_setpvf( get_sv( "CIAO::Lib::Param::_errmsg", 1 ),
-	     "%s: %s: %s", message, paramerrstr(), name );
+  int len = strlen(errstr) + strlen(message) + strlen(name) + 5;
 
-  parerr = s_parerr;
+  if ( MY_CXT.errmsg )
+    Renew( MY_CXT.errmsg, len, char );
+  else
+    New( 0, MY_CXT.errmsg, len, char );
+
+  sprintf( MY_CXT.errmsg, "%s: %s: %s", message, paramerrstr(), name );
 }
 
 
@@ -99,8 +183,13 @@ pmatchrewind(mlist)
 MODULE = CIAO::Lib::Param		PACKAGE = CIAO::Lib::Param
 
 BOOT:
+{
+  	MY_CXT_INIT;
+	MY_CXT.parerr = 0;
+	MY_CXT.errmsg = NULL;
 	set_paramerror(0);	/* Don't exit on error */
 	paramerract((vector) perl_paramerr);
+}
 
 CIAO_Lib_ParamPtr
 open(filename, mode, ...)
@@ -336,10 +425,38 @@ pputstr(pfile, pname, string)
 	char *	pname
 	char *	string
   ALIAS:
-	set = 1
-	put = 2
+	setstr = 1
   CLEANUP:
   	set_parerr();	
+
+void
+put(pfile, pname, value)
+	CIAO_Lib_ParamPtr	pfile
+	char *	pname
+	SV*	value
+  ALIAS:
+	set = 1
+  PREINIT:
+	char type[SZ_PFLINE];
+  CODE:
+        /* if the parameter exists and is a boolean,
+	   translate from numerics to string if it looks like a
+	   number, else let pset handle it
+	*/
+	if ( ParamInfo( pfile, pname, NULL, type, NULL, NULL, NULL, NULL ) &&
+	     0 == strcmp( "b", type ) && 
+	     ( value == &PL_sv_undef || looks_like_number( value ) )
+	     )
+	{
+	  pputb(pfile, pname, SvOK(value) ? SvIV(value) : 0);
+	}
+	else
+	{
+	  pputstr(pfile, pname, SvOK(value) ? (char*)SvPV_nolen(value) : (char*)NULL );
+	}
+  CLEANUP:
+  	set_parerr();	
+
 
 char *
 evaluateIndir(pf, name, val)

@@ -1,5 +1,13 @@
 Revision history for Perl extension CIAO::Lib::Param.
 
+0.03  Tue Jun 14 11:48:19 EDT 2005
+	- set() now automatically converts from Perl booleans to the
+	  string form required by cxcparam.
+
+	- the internal mechanism used to report errors was rewritten;
+	  it was too complicated and caused problems when a Param object
+	  was destroyed during the cleanup phase.
+
 0.02  Fri Jun 10 09:02:17 EDT 2005
 
         - can now pass extra arguments to pget, as in new.

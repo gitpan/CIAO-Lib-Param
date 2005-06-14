@@ -1,13 +1,14 @@
 Changes
 lib/CIAO/Lib/Param.pm
-lib/CIAO/Lib/Param/Match.pod
 lib/CIAO/Lib/Param/Error.pod
+lib/CIAO/Lib/Param/Match.pod
 Makefile.PL
 MANIFEST
+META.yml			Module meta-data (added by MakeMaker)
 Param.xs
 param/surface_intercept.par
 ppport.h
 README
+t/bool.t
 t/CIAO-Lib-Param.t
 typemap
-META.yml                                 Module meta-data (added by MakeMaker)

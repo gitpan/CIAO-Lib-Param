@@ -1,4 +1,4 @@
-use Test::More tests => 55;
+use Test::More tests => 51;
 
 use File::Path;
 BEGIN { use_ok('CIAO::Lib::Param') };
@@ -32,12 +32,6 @@ ok( !$@, "new" )
   or diag($@);
 
 is( $pf->get( 'dfm2_filename'), 'perfect.DFR', 'get' );
-
-# make sure boolean transformations in get() work like in getb()
-ok( 1 == $pf->getb( 'onlygoodrays' ), "getb: true" );
-ok( 1 == $pf->get( 'onlygoodrays' ),  "get boolean: true" );
-ok( 0 == $pf->getb( 'help' ), "getb: false" );
-ok( 0 == $pf->get( 'help' ),  "get boolean: false" );
 
 
 # check out pmatch
