@@ -1,0 +1,188 @@
+2006-09-19  Diab Jerius  <djerius@cfa.harvard.edu>
+
+	Tag: 0.06 
+
+2006-09-19 11:46 -0400  dj  <dj@macabre.cfa.harvard.edu>  (b4f1210b9501 [tip])
+
+	* Makefile.PL:
+	fix for redhat's non-default ExtUtils::MakeMaker behavior
+
+	red hat turns off the automatically generated LD_RUN_PATH, which
+	causes the build to fail. re-enable it.
+
+2006-09-03 17:12 -0400  dj  <dj@localhost.localdomain>  (88c4b593377e [tip])
+
+	* Param.xs, lib/CIAO/Lib/Param.pm, lib/CIAO/Lib/Param/Error.pod,
+	lib/CIAO/Lib/Param/Match.pod, t/CIAO-Lib-Param.t, t/bool.t, typemap:
+	added copyright notices
+
+2006-09-03 16:50 -0400  dj  <dj@localhost.localdomain>  (ae314e1aa289)
+
+	* lib/CIAO/Lib/Param.pm:
+	bump revision
+
+2006-09-03 16:50 -0400  dj  <dj@localhost.localdomain>  (a76c0f3d43b4)
+
+	* META.yml:
+	not needed
+
+2006-09-03 16:50 -0400  dj  <dj@localhost.localdomain>  (950ee6b68114)
+
+	* Makefile.PL:
+	only ask for linux ncurses if its installed
+
+2006-09-03 16:49 -0400  dj  <dj@localhost.localdomain>  (e48f441b140b)
+
+	* t/bool.t:
+	quiet undef warning
+
+2005-06-20 16:53  tag V0_05
+
+2005-06-20 16:53  dj
+
+	* Changes, lib/CIAO/Lib/Param.pm: [no log message]
+
+2005-06-20 16:53  dj
+
+	* Param.xs: added support for levels to paramerr handling.
+
+	  the C::L::Param object is now a structure rather than a simple
+	  paramfile.  this was implemented to handle per-object storage. it
+	  isn't currently used.
+
+	  level 0 paramerr calls are not fatal but were treated as such.
+	  they are now printed to stderr, as cxcparam uses them only when a
+	  query is made.
+
+2005-06-15 17:29  tag V0_04
+
+2005-06-15 17:29  dj
+
+	* Changes: [no log message]
+
+2005-06-15 17:28  dj
+
+	* lib/CIAO/Lib/Param.pm: added pquery
+
+2005-06-14 12:51  dj
+
+	* Changes: [no log message]
+
+2005-06-14 12:49  dj
+
+	* META.yml, lib/CIAO/Lib/Param.pm: version bump
+
+2005-06-14 12:49  dj
+
+	* t/bool.t: added more tests to check if PL_sv_yes and PL_sv_no get
+	  converted correctly.
+
+2005-06-14 12:47  dj
+
+	* Param.xs: yet another attempt at getting pset to correctly
+	  interpret boolean values. the difficulty is that "boolean"
+	  strings (i.e. yes/no) should be passed through, while things that
+	  might be real Perl booleans should be converted to strings.
+
+2005-06-14 11:51  tag V0_03
+
+2005-06-14 11:51  dj
+
+	* lib/CIAO/Lib/Param.pm: bumped version, updated docs
+
+2005-06-14 11:50  dj
+
+	* Changes, MANIFEST: [no log message]
+
+2005-06-14 11:45  dj
+
+	* Param.xs: moved all error handling into XSUB code; now just
+	  croaks() instead of doing the funky magic of tied hashes, etc.
+	  which was way too over engineered and caused bad things to happen
+	  when called during Perl's cleanup routine.
+
+	  set now pays attention to whether the parameter is a boolean, in
+	  which case it will automatically convert from Perl's version of
+	  boolean to cxcparam's string version.
+
+2005-06-14 11:06  dj
+
+	* lib/CIAO/Lib/Param.pm: greatly simplified exception handling by
+	  creating exception object in XSUB.  got rid of over-engineered
+	  tied scalar for errno, as it was causing errors upon object
+	  destruction in Perl cleanup when the object wasn't explicitly
+	  destroyed before the end of the program.
+
+2005-06-14 11:04  dj
+
+	* t/: CIAO-Lib-Param.t, bool.t: moved boolean tests to bool.t
+
+2005-06-10 14:33  tag V0_02
+
+2005-06-10 14:33  dj
+
+	* Changes, lib/CIAO/Lib/Param.pm, t/CIAO-Lib-Param.t: pass extra
+	  args to pget, same as new
+
+2005-06-10 14:33  dj
+
+	* META.yml: [no log message]
+
+2005-06-10 09:21  dj
+
+	* lib/CIAO/Lib/Param.pm: bumped version
+
+2005-06-10 09:21  dj
+
+	* lib/CIAO/Lib/Param.pm: added support for paramopen's two means of
+	  getting the filename.
+
+	  updated docs
+
+2005-06-10 09:19  dj
+
+	* Changes: [no log message]
+
+2005-06-10 09:18  dj
+
+	* t/CIAO-Lib-Param.t: added extra tests for command line args and
+	  filename specification
+
+2005-06-10 09:18  dj
+
+	* Param.xs: extra arguments to open were being written off the end
+	  of the argument array leading to segv's.
+
+	  the actual pointer to the argv data was passed, rather than a
+	  copy.  if the parameter library were to change those data, then
+	  bad things might happen.  a copy is now passed
+
+2005-04-20 15:14  tag V0_01
+
+2005-04-20 15:14  dj
+
+	* META.yml: META.yml
+
+2005-04-20 15:14  dj
+
+	* MANIFEST: [no log message]
+
+2005-04-20 15:14  dj
+
+	* Makefile.PL: sloppy, sloppy programming (old code) caused CIAO
+	  build to fall through to pkg-config, even if it had succeeded.
+
+2005-04-20 15:01  dj
+
+	* Changes, MANIFEST, Makefile.PL, Param.xs, README, ppport.h,
+	  typemap, lib/CIAO/Lib/Param.pm, lib/CIAO/Lib/Param/Error.pod,
+	  lib/CIAO/Lib/Param/Match.pod, param/surface_intercept.par,
+	  t/CIAO-Lib-Param.t: Initial revision
+
+2005-04-20 15:01  dj
+
+	* Changes, MANIFEST, Makefile.PL, Param.xs, README, ppport.h,
+	  typemap, lib/CIAO/Lib/Param.pm, lib/CIAO/Lib/Param/Error.pod,
+	  lib/CIAO/Lib/Param/Match.pod, param/surface_intercept.par,
+	  t/CIAO-Lib-Param.t: [no log message]
+

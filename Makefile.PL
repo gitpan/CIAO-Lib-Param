@@ -62,9 +62,19 @@ if ( 'solaris' eq $^O )
 if ( 'linux' eq $^O )
 {
   # on some linux platforms with readline 4.x, explicit linking against
-  # ncurses is necessary
-  $libs .= ' -lncurses';
+  # ncurses is necessary. this is oh so hokey!
+  $libs .= ' -lncurses'
+    if -e '/usr/lib/libncurses.so';
 }
+
+my @Extras;
+
+# this is a Red Hat (bless 'em) proprietary flag. they changed the default
+# behavior of ExtUtils::MakeMaker, and now we have to revert it.  at least
+# they provide a switch to do so.
+push @Extras, (USE_MM_LD_RUN_PATH => 1 )
+  if -f '/etc/redhat-release';
+
 
 WriteMakefile
 (
@@ -78,6 +88,7 @@ WriteMakefile
  DEFINE            => $defs || '', # e.g., '-DHAVE_SOMETHING'
  INC               => "-I. $incs", # e.g., '-I. -I/usr/include/other'
  clean		  => { FILES => "tmp" },
+ @Extras
 );
 
 

@@ -1,4 +1,5 @@
 Changes
+ChangeLog
 lib/CIAO/Lib/Param.pm
 lib/CIAO/Lib/Param/Error.pod
 lib/CIAO/Lib/Param/Match.pod

@@ -1,5 +1,26 @@
 Revision history for Perl extension CIAO::Lib::Param.
 
+0.06  Tue Sep 19 10:20:47 EDT 2006
+        - minor cleanups
+	- fix compilation on systems that don't have ncurses
+	- redhat systems have non-standard ExtUtils::MakeMaker setup; 
+	  workaround it
+
+0.05  Mon Jun 20 16:54:12 EDT 2005
+
+	- level 0 errors to paramerr are non-fatal but were being
+	  treated as fatal.  they are now printed to stderr as
+	  cxcparam uses them only in areas where a terminal is assumed
+	  to be present.  kludgy, but it works for now.
+
+
+0.04  Tue Jun 14 12:50:13 EDT 2005
+	- one more try to get the set() method to properly distinguish
+          Perl booleans from strings so that boolean strings ('yes',
+          'no') are passed through while Perl booleans are converted
+          to strings.
+	- added pquery() class method
+
 0.03  Tue Jun 14 11:48:19 EDT 2005
 	- set() now automatically converts from Perl booleans to the
 	  string form required by cxcparam.

@@ -1,4 +1,28 @@
-use Test::More tests => 12;
+# --8<--8<--8<--8<--
+#
+# Copyright (C) 2006 Smithsonian Astrophysical Observatory
+#
+# This file is part of CIAO-Lib-Param
+#
+# CIAO-Lib-Param is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# CIAO-Lib-Param is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the 
+#       Free Software Foundation, Inc. 
+#       51 Franklin Street, Fifth Floor
+#       Boston, MA  02110-1301, USA
+#
+# -->8-->8-->8-->8--
+
+use Test::More tests => 14;
 
 use File::Path;
 BEGIN { use_ok('CIAO::Lib::Param') };
@@ -59,8 +83,24 @@ ok( !$@ && 1 == $pf->get('help'),  'set: 1' );
 
 $pf->set( 'help', 'yes' );
 eval {
-     $pf->set('help', undef );
+    no warnings;
+    $pf->set('help', undef );
 };
 ok( !$@ && 0 == $pf->get('help'),  'set: undef' );
 
+
+# check if Perl yes/no values are handled correctly.
+# these are used by the get method
+
+$pf->set('help', 0 );
+$value = $pf->get( 'help' );
+$pf->set('help', 1 );
+$pf->set( 'help', $value );
+ok( 0 == $pf->get('help'),  'set: get(no)' );
+
+$pf->set('help', 1 );
+$value = $pf->get( 'help' );
+$pf->set('help', 0 );
+$pf->set( 'help', $value );
+ok( 1 == $pf->get('help'),  'set: get(yes)' );
 

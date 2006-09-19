@@ -1,3 +1,27 @@
+# --8<--8<--8<--8<--
+#
+# Copyright (C) 2006 Smithsonian Astrophysical Observatory
+#
+# This file is part of CIAO-Lib-Param
+#
+# CIAO-Lib-Param is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# CIAO-Lib-Param is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the 
+#       Free Software Foundation, Inc. 
+#       51 Franklin Street, Fifth Floor
+#       Boston, MA  02110-1301, USA
+#
+# -->8-->8-->8-->8--
+
 package CIAO::Lib::Param;
 
 
@@ -14,14 +38,14 @@ our @CARP_NOT = qw/ CIAO::Lib::Param::Croak /;
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
         pget
+	pquery
 	pset
 	pfind
-	pferrno
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '0.03';
+our $VERSION = '0.06';
 
 require XSLoader;
 XSLoader::load('CIAO::Lib::Param', $VERSION);
@@ -76,16 +100,16 @@ sub new
   $self;
 }
 
-# class get method to perform a one shot read of parameters
-sub pget
+sub _pread
 {
   my $pfile = shift;
+  my $mode  = shift;
+
 
   my $argv = 'ARRAY' eq ref $_[0] ? shift : undef;
-
   my $wantarray = wantarray();
 
-  my $pf = CIAO::Lib::Param->new( $pfile, "rH", defined $argv ? @$argv : () );
+  my $pf = CIAO::Lib::Param->new( $pfile, $mode, defined $argv ? @$argv : () );
 
   if ( @_ )
   {
@@ -106,6 +130,27 @@ sub pget
   }
 
   die( "impossible!\n" );
+}
+
+# class get method to perform a one shot read of parameters
+# never query
+sub pget
+{
+  my $pfile = shift;
+
+  unshift @_, $pfile, "rH";
+  # act like we were never here
+  goto &_pread;
+}
+
+# class get method to perform a one shot read of parameters
+sub pquery
+{
+  my $pfile = shift;
+
+  unshift @_, $pfile, "r";
+  # act like we were never here
+  goto &_pread;
 }
 
 sub pset
@@ -191,6 +236,9 @@ for repeated access to parameters.
   @pvalues = pget( $filename, $argv, @pnames );
   %params  = pget( $filename, $argv );
 
+Read one or more parameter values.  The user is never queried for a
+parameter value.  Illegal values result in an exception being thrown.
+
 In the first form (called in scalar context), retrieve the value of a
 single parameter.
 
@@ -205,6 +253,15 @@ should contain elements of the form C<param=value>.  Typically this is
 used to allow command line argument assignment:
 
   %params = pget( $0, \@ARGV );
+
+=item pquery
+
+  use CIAO::Lib::Param qw/ pquery /;
+
+  [...]
+
+This is identical to =pget= except that the user is queried when
+necessary.
 
 =item pset
 
@@ -483,7 +540,7 @@ Diab Jerius, E<lt>djerius@cpanE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2005 by the Smithsonian Astrophysical Observatory
+Copyright (C) 2005-2006 by the Smithsonian Astrophysical Observatory
 
 This code is released under the GNU General Public License.  You may
 find a copy at <http://www.fsf.org/copyleft/gpl.html>.
