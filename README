@@ -1,5 +1,5 @@
-CIAO-Lib-Param version 0.01
-===========================
+			    CIAO-Lib-Param
+			    ==============
 
 CIAO::Lib::Param is a Perl interface to the parameter library
 (cxcparam) shipped with the Chandra Interactive Analysis of Observa-
@@ -53,9 +53,14 @@ This module has been tested against the CIAO 3.2.1 cxcparam library on
 the following systems:
 
       32bit Solaris 2.8
+
       32bit Linux Debian sarge
-      32bit Linux Debian sid
-      32bit Linux Fedora Core 2
+      32bit Linux Fedora Core 2,4,6
+      32bit Linux RedHat Enterprise 4
+
+      64bit Linux Fedora Core 3,4,6
+      64bit Linux Debian etch
+
 
 RESOURCES
 

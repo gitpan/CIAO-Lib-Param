@@ -48,10 +48,11 @@ if ( $libs =~ /ciao/ )
 if ( 'solaris' eq $^O )
 {
   # solaris ld ignores LD_RUN_PATH if there are -R options.  The Perl
-  # config may have them in lddlflags; if so, add LD_RUN_PATH as a -R option
+  # config may have some in lddlflags and some might be lurking in the
+  # libs we've gotten so far.  If so, if so, add -R's for all of the -L's
   require Config;
   Config->import();
-  if ( $Config{lddlflags} =~ /-R/ )
+  if ( $Config{lddlflags} =~ /-R/ || $libs =~ /-R/ )
   {
     $libs = join(' ', 
 		 ( map { s/-L/-R/; $_ } grep { /^-L/ } split(' ', $libs ) ),

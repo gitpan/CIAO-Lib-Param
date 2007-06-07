@@ -1,3 +1,16 @@
+2007-06-07  djerius  <djerius@cfa.harvard.edu>
+
+	Tag: 0.07
+	* Makefile.PL:
+	solaris -R kludge detection extended to cxcparam libs as well as
+	Perl's
+
+	When checking for -R's to work around ld ignoring LD_RUN_PATH if
+	there's a -R, the libs for cxcparam weren't checked. This broke
+	things when compiling against a Perl with no -R's in
+	$Config{lddlflags}.
+	[8f4fd1b9fb6c] [tip]
+
 2006-09-19  Diab Jerius  <djerius@cfa.harvard.edu>
 
 	Tag: 0.06 

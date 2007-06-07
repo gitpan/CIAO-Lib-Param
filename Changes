@@ -1,5 +1,8 @@
 Revision history for Perl extension CIAO::Lib::Param.
 
+0.07  Thu Jun  7 15:10:29 EDT 2007
+        - tweak to Solaris -R ld flag kludge
+
 0.06  Tue Sep 19 10:20:47 EDT 2006
         - minor cleanups
 	- fix compilation on systems that don't have ncurses
