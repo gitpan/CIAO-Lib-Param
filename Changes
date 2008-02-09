@@ -1,5 +1,8 @@
 Revision history for Perl extension CIAO::Lib::Param.
 
+0.08  Sat Feb  9 17:18:57 EST 2008
+        - handle parameter values greater than SZ_PFLINE in length
+
 0.07  Thu Jun  7 15:10:29 EDT 2007
         - tweak to Solaris -R ld flag kludge
 

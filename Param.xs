@@ -76,8 +76,14 @@ typedef pmatchlist CIAO_Lib_Param_MatchPtr;
 static void *
 get_mortalspace( int nbytes )
 {
-  SV *mortal = sv_2mortal( NEWSV(0, nbytes ) );
-  return SvPVX(mortal);
+  SV  *mortal = sv_2mortal( NEWSV(0, nbytes ) );
+  char *ptr = SvPVX( mortal );
+
+  /* set the extra NULL byte that Perl gives us to NULL
+     to allow easy string overflow checking */
+  ptr[nbytes] = '\0';
+
+  return ptr;
 }
 
 
@@ -188,13 +194,14 @@ perl_paramerr( int level, char *message, char *name )
   dMY_CXT;
   SV* sv;
   char *errstr;
+  int len;
 
   /* save parerr before call to paramerrstr(), as that will
      reset it */
   MY_CXT.parerr = parerr;
   errstr = paramerrstr();
 
-  int len = strlen(errstr) + strlen(message) + strlen(name) + 5;
+  len = strlen(errstr) + strlen(message) + strlen(name) + 5;
 
   if ( MY_CXT.errmsg )
     Renew( MY_CXT.errmsg, len, char );
@@ -442,9 +449,17 @@ get(pfile, pname)
 	  }
 	  else
 	  {
-	    char* str = get_mortalspace( SZ_PFLINE );
-	    pgetstr( pfile->pf, pname, str, SZ_PFLINE );
-	    sv_setpv(ST(0), str );
+	    char *str;
+	    size_t buflen = 0;
+	    size_t len = 0;
+	    while( len == buflen )
+	    {	    
+	      buflen += SZ_PFLINE;
+	      str = get_mortalspace( buflen );
+	      pgetstr( pfile->pf, pname, str, buflen );
+	      len = strlen( str );
+	    }
+	    sv_setpv(ST(0), str);
 	  }
 	}
 	else
@@ -458,11 +473,19 @@ pgetstr(pfile, pname )
 	CIAO_Lib_ParamPtr	pfile
 	char *	pname
   PREINIT:
-	char* str = get_mortalspace( SZ_PFLINE );
+	char* str;
+	size_t buflen = 0;
+	size_t len = 0;
   CODE:
 	RETVAL = NULL;
-	if ( pgetstr( pfile->pf, pname, str, SZ_PFLINE ) )
-	  RETVAL = str;
+	while( len == buflen )
+	{	    
+	   buflen += SZ_PFLINE;
+	   str = get_mortalspace( buflen );
+	   pgetstr( pfile->pf, pname, str, buflen );
+	   len = strlen( str );
+	 }
+        RETVAL = str;
   	croak_on_parerr();	
   OUTPUT:
 	RETVAL

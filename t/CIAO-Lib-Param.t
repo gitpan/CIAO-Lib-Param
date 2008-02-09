@@ -22,7 +22,7 @@
 #
 # -->8-->8-->8-->8--
 
-use Test::More tests => 51;
+use Test::More tests => 53;
 
 use File::Path;
 BEGIN { use_ok('CIAO::Lib::Param') };
@@ -123,6 +123,27 @@ undef $pf;
 
 }
 
+#--------------------------------------------------------
+# check super long parameter value
+{
+    my $pfile = 'acis_bkgrnd_lookup';
+    open PFILE, "param/$pfile.par"
+      or die( "error opening $pfile\n" );
+    my $outfile;
+    while(<PFILE>)
+    {
+        last if ( $outfile ) = /^outfile,f,h,"([^"]+)"/;
+
+    }
+    die( "couldn't parse $pfile\n" )
+      if ! defined $outfile;
+   close( PFILE );
+   ok( $outfile = pget( $pfile, 'outfile' ), "pget long value" );
+
+
+   my $pf = CIAO::Lib::Param->new( 'acis_bkgrnd_lookup' );
+   ok( $outfile = $pf->getstr( 'outfile' ), "pgetstr long value" );
+}
 #--------------------------------------------------------
 # test pset of a single value
 eval {
